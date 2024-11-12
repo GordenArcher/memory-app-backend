@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-941u97jv&f%gk$_w8$#$9cu2i9o8x-vjbk#v-!l6b+763ibla^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['gordenarcher.pythonanywhere.com']
 
 
 # Application definition
@@ -54,6 +54,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    'https://recuerdo.vercel.app/',
 ]
 
 MIDDLEWARE = [
