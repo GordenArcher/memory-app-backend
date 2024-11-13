@@ -9,4 +9,6 @@ urlpatterns = [
     path("reset_password/<str:uidb64>/<str:token>/", views.reset_password),
     path("get_user/", views.get_user),
     path("profile_pic/", views.set_profil_pic),
+    path("get_profile_pic/", views.get_profilepic),
+    path("delete_image/<str:pk>/", views.delete_image)
 ]

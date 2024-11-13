@@ -3,6 +3,7 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from .admin import MemoryAdmin
 from .serializers import UserSerializer, ProfilePicSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -18,7 +19,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.core.exceptions import ObjectDoesNotExist
 
 # Create your views here.
 
@@ -172,20 +172,58 @@ def get_user(request):
 @login_required()
 @permission_classes([IsAuthenticated])
 def set_profil_pic(request):
+    user = request.user
     image = request.FILES.get('profile_image')
+
+    if image:
+
+        try:
+            existing_image = ProfilePic.objects.get(user=user)
+
+            existing_image.profile_image.delete()
+            existing_image.delete()
+
+        except ProfilePic.DoesNotExist:
+            pass
+
+        new_image = ProfilePic.objects.create(user=user, profile_image=image)
+        return Response({"message": "Profile image updated successfully."}, status=status.HTTP_200_OK)
+
+    return Response({"error": "No image provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@login_required()
+@permission_classes([IsAuthenticated])
+def get_profilepic(request):
+    user = request.user
 
     try:
 
-        if not request.user.is_authenticated:
-            return Response(
-                {"error": "Baby log in before you set a profile picture"},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        image_entry = ProfilePic.objects.create(user=request.user, profile_image=image)
+        image_entry = ProfilePic.objects.get(user=user)
         serializer = ProfilePicSerializer(image_entry)
 
         return Response({"data": serializer.data}, status=status.HTTP_201_CREATED)
 
+
+    except ProfilePic.DoesNotExist:
+
+        return Response({"error": "Profile picture not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
     except Exception as e:
-        return Response({"error":f"Error creating Memory entry: {e}"})
+
+        return Response({"error": f"Error retrieving profile picture: {e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@api_view(['DELETE'])
+def delete_image(request, pk):
+    try:
+        delete_memory = MemoryAdmin.objects.get(pk=pk)
+
+    except MemoryAdmin.DoesNotExist:
+        return Response({"error":"Memory with this id does not exist"})
+
+    delete_memory.delete()
+    return Response({"data":"Memory Deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
