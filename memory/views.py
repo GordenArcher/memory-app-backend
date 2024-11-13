@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.core.exceptions import ObjectDoesNotExist
 
 # Create your views here.
 
@@ -95,7 +96,7 @@ def send_email(request):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
             context = {
-                'reset_url': f'http://localhost:5173/reset-password/{uid}/{reset_token}',
+                'reset_url': f'https://gordenarcher.pythonanywhere.com/api/reset-password/{uid}/{reset_token}',
                 'username': user.username,
                 'message': "Babe, you forgot your password? No problem,"
             }
@@ -151,8 +152,7 @@ def reset_password(request, uidb64, token):
             }, status=status.HTTP_200_OK)
 
     except Exception as e:
-        return Response({"error": f"Something occurred: {str(e)}. Please try again later."},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": f"Something occurred: {str(e)}. Please try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -216,14 +216,20 @@ def get_profilepic(request):
         return Response({"error": f"Error retrieving profile picture: {e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
+@permission_classes([IsAuthenticated])
 @api_view(['DELETE'])
 def delete_image(request, pk):
+    user = request.user
+
     try:
-        delete_memory = MemoryAdmin.objects.get(pk=pk)
+        memory_entry = Memory.objects.get(pk=pk, user=user)
+        memory_entry.delete()
 
-    except MemoryAdmin.DoesNotExist:
-        return Response({"error":"Memory with this id does not exist"})
+        return Response({"data": "Memory image deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    delete_memory.delete()
-    return Response({"data":"Memory Deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    except ObjectDoesNotExist:
+        return Response({"error": "Memory with this id does not exist or is not related to the authenticated user"},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    except Exception as e:
+        return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
