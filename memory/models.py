@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 class Memory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='memories')
+    media = models.FileField(upload_to='memories', null=True, blank=True)
     description = models.TextField(max_length=100000, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
 

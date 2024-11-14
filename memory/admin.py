@@ -3,7 +3,7 @@ from .models import Memory, ProfilePic
 
 # Register your models here.
 class MemoryAdmin(admin.ModelAdmin):
-    list_display = ['user', 'image', 'description', 'date_created']
+    list_display = ['user', 'media', 'description', 'date_created']
     list_filter = ['user', 'description', 'date_created']
 
     def __str__(self):

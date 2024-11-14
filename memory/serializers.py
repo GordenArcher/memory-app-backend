@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 class MemorySerializers(serializers.ModelSerializer):
     class Meta:
         model = Memory
-        fields = ['id', 'user', 'image', 'description', 'date_created']
+        fields = ['id', 'user', 'media', 'description', 'date_created']
 
 
 

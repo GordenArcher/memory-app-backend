@@ -52,7 +52,7 @@ def login(request):
 @permission_classes([IsAuthenticated])
 def send_image(request):
     data = request.data
-    image = request.FILES.get('image')
+    media = request.FILES.get('media')
     desc = data.get('description')
 
     try:
@@ -63,7 +63,7 @@ def send_image(request):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        image_entry = Memory.objects.create(user=request.user, image=image, description=desc)
+        image_entry = Memory.objects.create(user=request.user, media=media, description=desc)
         serializer = MemorySerializers(image_entry)
 
         return Response({"data": serializer.data}, status=status.HTTP_201_CREATED)
