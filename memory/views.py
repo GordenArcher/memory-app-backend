@@ -47,6 +47,46 @@ def login(request):
         return Response({"error":"Babe! you forgot your credentials ?"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+@api_view(['POST'])
+def register(request):
+    data = request.data
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+    password2 = data.get("password2")
+
+    try:
+        if password == password2:
+            if User.objects.filter(username=username).exists():
+                return Response({"error": f"{username} already exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if User.objects.filter(email=email).exists():
+                return Response({"error": f"{email} already exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                user = User.objects.create_user(username=username, email=email, password=password)
+                user.save()
+
+                token, _ = Token.objects.get_or_create(user=user)
+
+                serializer = UserSerializer(user)
+
+                return Response({
+                    "success": serializer.data,
+                    "token": token.key
+                }, status=status.HTTP_201_CREATED)
+
+        else:
+            return Response({"error": "password does not match"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+    except Exception as e:
+        return Response({"error": f"Error creating User: {e}"})
+
+
+
+
 @api_view(['POST'])
 @login_required()
 @permission_classes([IsAuthenticated])
