@@ -225,7 +225,8 @@ def delete_image(request, pk):
         memory_entry = Memory.objects.get(pk=pk, user=user)
         memory_entry.delete()
 
-        return Response({"data": "Memory image deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+        return Response({"data": "Memory image deleted successfully"}, status=status.HTTP_200_OK)
 
     except ObjectDoesNotExist:
         return Response({"error": "Memory with this id does not exist or is not related to the authenticated user"},
