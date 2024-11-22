@@ -61,6 +61,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://recuerdo.vercel.app',
 ]
 
+GEMINI_API_KEY="AIzaSyDscERusNhsZPu2i3l95du_JHzswyB4dHE"
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",

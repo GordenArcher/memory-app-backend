@@ -11,5 +11,6 @@ urlpatterns = [
     path("get_user/", views.get_user),
     path("profile_pic/", views.set_profil_pic),
     path("get_profile_pic/", views.get_profilepic),
-    path("delete_image/<str:pk>/", views.delete_image)
+    path("delete_image/<str:pk>/", views.delete_image),
+    path("generate_content/", views.generate_content)
 ]

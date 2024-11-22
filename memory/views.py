@@ -3,7 +3,6 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from .admin import MemoryAdmin
 from .serializers import UserSerializer, ProfilePicSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -20,7 +19,6 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.core.exceptions import ObjectDoesNotExist
-
 # Create your views here.
 
 @api_view(['POST'])
@@ -47,7 +45,6 @@ def login(request):
         return Response({"error":"Babe! you forgot your credentials ?"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(['POST'])
 def register(request):
     data = request.data
@@ -56,36 +53,28 @@ def register(request):
     password = data.get("password")
     password2 = data.get("password2")
 
-    try:
-        if password == password2:
-            if User.objects.filter(username=username).exists():
-                return Response({"error": f"{username} already exist"}, status=status.HTTP_400_BAD_REQUEST)
+    if password == password2:
+        if User.objects.filter(username=username).exists():
+            return Response({"error":f"{username} already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if User.objects.filter(email=email).exists():
-                return Response({"error": f"{email} already exist"}, status=status.HTTP_400_BAD_REQUEST)
-
-            else:
-                user = User.objects.create_user(username=username, email=email, password=password)
-                user.save()
-
-                token, _ = Token.objects.get_or_create(user=user)
-
-                serializer = UserSerializer(user)
-
-                return Response({
-                    "success": serializer.data,
-                    "token": token.key
-                }, status=status.HTTP_201_CREATED)
+        elif User.objects.filter(email=email).exists():
+            return Response({"error":f"{email} already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            return Response({"error": "password does not match"}, status=status.HTTP_400_BAD_REQUEST)
+            user = User.objects.create_user(username=username, email=email, password=password)
+            user.save()
 
+            token, _ = Token.objects.ccreate(user=request.user)
 
-    except Exception as e:
-        return Response({"error": f"Error creating User: {e}"})
+            serializer = UserSerializer(user)
+            return Response(
+                {
+                    "data":serializer.data,
+                    "token":Token.key
+                    }, status=status.HTTP_200_OK)
 
-
-
+    return Response({"error":"Password does not match"}, status=status.HTTP_400_BAD_REQUEST)
+            
 
 @api_view(['POST'])
 @login_required()
@@ -265,8 +254,7 @@ def delete_image(request, pk):
         memory_entry = Memory.objects.get(pk=pk, user=user)
         memory_entry.delete()
 
-
-        return Response({"data": "Memory image deleted successfully"}, status=status.HTTP_200_OK)
+        return Response({"data": "Memory image deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     except ObjectDoesNotExist:
         return Response({"error": "Memory with this id does not exist or is not related to the authenticated user"},
@@ -274,3 +262,46 @@ def delete_image(request, pk):
 
     except Exception as e:
         return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+import requests
+
+
+@api_view(['POST'])
+def generate_content(request):
+    text = request.data.get("text", "").strip()
+
+    if not text:
+        return Response({"error": "Text field is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+    api_key = "AIzaSyDscERusNhsZPu2i3l95du_JHzswyB4dHE"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": text
+                    }
+                ]
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(
+            f"{url}?key={api_key}",
+            headers=headers,
+            json=payload
+        )
+        response_data = response.json()
+
+        if response.status_code != 200:
+            return Response({"error": response_data.get("error", "Failed to generate content")},
+                            status=response.status_code)
+
+        return Response({"response": response_data}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
